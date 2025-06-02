@@ -2724,6 +2724,7 @@ dependencies = [
  "async-trait",
  "deno_core",
  "deno_error",
+ "deno_net",
  "deno_tls",
  "http-body-util",
  "hyper 1.6.0",
