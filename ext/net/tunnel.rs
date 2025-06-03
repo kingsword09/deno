@@ -49,6 +49,13 @@ pub enum Error {
   UnexpectedHeader,
   #[error("UnsupportedVersion")]
   UnsupportedVersion,
+
+  #[error("missing auth token")]
+  MissingToken,
+  #[error("missing org")]
+  MissingOrg,
+  #[error("missing app")]
+  MissingApp,
 }
 
 static TUNNEL: OnceLock<crate::tunnel::TunnelListener> = OnceLock::new();
@@ -139,10 +146,21 @@ impl TunnelListener {
       if control.1.read_u32_le().await? != VERSION {
         return Err(Error::UnsupportedVersion);
       }
+
+      let token = std::env::var("DENO_UNSTABLE_TUNNEL_HOST_TOKEN")
+        .map_err(|_| Error::MissingToken)?;
+      let org = std::env::var("DENO_UNSTABLE_TUNNEL_HOST_ORG")
+        .map_err(|_| Error::MissingOrg)?;
+      let app = std::env::var("DENO_UNSTABLE_TUNNEL_HOST_APP")
+        .map_err(|_| Error::MissingApp)?;
+
       write_stream_header(
         &mut control.0,
         StreamHeader::ControlRequest {
           hostname: "localhost".into(),
+          token,
+          org,
+          app,
         },
       )
       .await?;
@@ -384,6 +402,9 @@ impl Resource for TunnelStreamResource {
 enum StreamHeader {
   ControlRequest {
     hostname: String,
+    token: String,
+    org: String,
+    app: String,
   },
   ControlResponse {
     addr: SocketAddr,
