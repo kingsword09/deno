@@ -70,6 +70,7 @@ const NODE_IGNORED_TEST_DIRS = [
 
 const NODE_IGNORED_TEST_CASES = new Set([
   "parallel/test-benchmark-cli.js", // testing private benchmark utility
+  "parallel/test-buffer-backing-arraybuffer.js", // Deno does not allow heap-allocated ArrayBuffer, and we can't change it (for now)
 ]);
 
 /** The group is the directory name of the test file.
@@ -115,8 +116,9 @@ type ErrorUnexpected = {
   message: string;
 };
 
-function getV8Flags(source: string): string[] {
+function getFlags(source: string): [string[], string[]] {
   const v8Flags = [] as string[];
+  const nodeOptions = [] as string[];
   const flags = parseFlags(source);
   flags.forEach((flag) => {
     switch (flag) {
@@ -126,11 +128,17 @@ function getV8Flags(source: string): string[] {
       case "--expose-gc":
         v8Flags.push("--expose-gc");
         break;
+      case "--no-warnings":
+        nodeOptions.push("--no-warnings");
+        break;
+      case "--allow-natives-syntax":
+        v8Flags.push("--allow-natives-syntax");
+        break;
       default:
         break;
     }
   });
-  return v8Flags;
+  return [v8Flags, nodeOptions];
 }
 
 /**
@@ -150,7 +158,7 @@ async function runSingle(
   try {
     const source = await Deno.readTextFile(testPath_);
     const usesNodeTest = usesNodeTestModule(source);
-    const v8Flags = getV8Flags(source);
+    const [v8Flags, nodeOptions] = getFlags(source);
     cmd = new Deno.Command(Deno.execPath(), {
       args: [
         ...(usesNodeTest ? TEST_ARGS : RUN_ARGS),
@@ -160,6 +168,7 @@ async function runSingle(
       env: {
         NODE_TEST_KNOWN_GLOBALS: "0",
         NODE_SKIP_FLAG_CHECK: "1",
+        NODE_OPTIONS: nodeOptions.join(" "),
         NO_COLOR: "1",
       },
       stdout: "piped",

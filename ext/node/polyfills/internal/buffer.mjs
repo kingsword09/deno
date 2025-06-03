@@ -113,7 +113,7 @@ float32Array[0] = -1; // 0xBF800000
 // check this with `os.endianness()` because that is determined at compile time.
 export const bigEndian = uInt8Float32Array[3] === 0;
 
-export const kMaxLength = 2147483647;
+export const kMaxLength = NumberMAX_SAFE_INTEGER;
 export const kStringMaxLength = 536870888;
 const MAX_UINT32 = 2 ** 32;
 
@@ -794,6 +794,15 @@ Buffer.prototype.asciiSlice = function asciiSlice(offset, length) {
 };
 
 Buffer.prototype.asciiWrite = function asciiWrite(string, offset, length) {
+  // deno-lint-ignore prefer-primordials
+  if (offset < 0 || offset > this.byteLength) {
+    throw new codes.ERR_BUFFER_OUT_OF_BOUNDS("offset");
+  }
+  // deno-lint-ignore prefer-primordials
+  if (length < 0 || length > this.byteLength - offset) {
+    throw new codes.ERR_BUFFER_OUT_OF_BOUNDS("length");
+  }
+
   return blitBuffer(asciiToBytes(string), this, offset, length);
 };
 
@@ -865,6 +874,15 @@ Buffer.prototype.latin1Write = function latin1Write(
   offset,
   length,
 ) {
+  // deno-lint-ignore prefer-primordials
+  if (offset < 0 || offset > this.byteLength) {
+    throw new codes.ERR_BUFFER_OUT_OF_BOUNDS("offset");
+  }
+  // deno-lint-ignore prefer-primordials
+  if (length < 0 || length > this.byteLength - offset) {
+    throw new codes.ERR_BUFFER_OUT_OF_BOUNDS("length");
+  }
+
   return blitBuffer(asciiToBytes(string), this, offset, length);
 };
 
@@ -890,6 +908,15 @@ Buffer.prototype.utf8Slice = function utf8Slice(string, offset, length) {
 };
 
 Buffer.prototype.utf8Write = function utf8Write(string, offset, length) {
+  // deno-lint-ignore prefer-primordials
+  if (offset < 0 || offset > this.byteLength) {
+    throw new codes.ERR_BUFFER_OUT_OF_BOUNDS("offset");
+  }
+  // deno-lint-ignore prefer-primordials
+  if (length < 0 || length > this.byteLength - offset) {
+    throw new codes.ERR_BUFFER_OUT_OF_BOUNDS("length");
+  }
+
   offset = offset || 0;
   const maxLength = MathMin(length || Infinity, this.length - offset);
   const buf = offset || maxLength < this.length
@@ -966,9 +993,7 @@ function fromArrayBuffer(obj, byteOffset, length) {
     throw new codes.ERR_BUFFER_OUT_OF_BOUNDS("offset");
   }
 
-  if (length === undefined) {
-    length = maxLength;
-  } else {
+  if (length !== undefined) {
     // Convert length to non-negative integer.
     length = +length;
     if (length > 0) {
@@ -993,7 +1018,6 @@ function _base64Slice(buf, start, end) {
     return forgivingBase64Encode(buf.slice(start, end));
   }
 }
-
 const decoder = new TextDecoder();
 
 function _utf8Slice(buf, start, end) {
