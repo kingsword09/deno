@@ -917,9 +917,14 @@ function serveInner(options, handler) {
       if (options.onListen) {
         options.onListen(listener.addr);
       } else {
+        const additional = listener.addr.port === 443
+          ? ""
+          : `:${listener.addr.port}`;
         import.meta.log(
           "info",
-          `Listening on https://${formatHostName(listener.addr.hostname)}`,
+          `Listening on https://${
+            formatHostName(listener.addr.hostname)
+          }${additional}`,
         );
       }
     });

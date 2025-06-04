@@ -165,6 +165,9 @@ pub enum NetError {
   #[class(generic)]
   #[error("VSOCK is not supported on this platform")]
   VsockUnsupported,
+  #[class(generic)]
+  #[error("Tunnel is not open")]
+  TunnelMissing,
 }
 
 pub(crate) fn accept_err(e: std::io::Error) -> NetError {
@@ -842,7 +845,7 @@ pub fn op_net_listen_tunnel(
   state: &mut OpState,
 ) -> Result<(ResourceId, IpAddr), NetError> {
   let Some(listener) = super::tunnel::get_tunnel() else {
-    return Err(NetError::VsockUnsupported);
+    return Err(NetError::TunnelMissing);
   };
   let listener = listener.clone();
   let local_addr = listener.local_addr()?.into();

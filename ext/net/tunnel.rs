@@ -147,17 +147,17 @@ impl TunnelListener {
         return Err(Error::UnsupportedVersion);
       }
 
-      let token = std::env::var("DENO_UNSTABLE_TUNNEL_HOST_TOKEN")
+      let token = std::env::var("DENO_UNSTABLE_TUNNEL_TOKEN")
         .map_err(|_| Error::MissingToken)?;
-      let org = std::env::var("DENO_UNSTABLE_TUNNEL_HOST_ORG")
+      let org = std::env::var("DENO_UNSTABLE_TUNNEL_ORG")
         .map_err(|_| Error::MissingOrg)?;
-      let app = std::env::var("DENO_UNSTABLE_TUNNEL_HOST_APP")
+      let app = std::env::var("DENO_UNSTABLE_TUNNEL_APP")
         .map_err(|_| Error::MissingApp)?;
 
       write_stream_header(
         &mut control.0,
         StreamHeader::ControlRequest {
-          hostname: "localhost".into(),
+          name: None,
           token,
           org,
           app,
@@ -401,7 +401,7 @@ impl Resource for TunnelStreamResource {
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 enum StreamHeader {
   ControlRequest {
-    hostname: String,
+    name: Option<String>,
     token: String,
     org: String,
     app: String,
