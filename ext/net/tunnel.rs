@@ -156,12 +156,7 @@ impl TunnelListener {
 
       write_stream_header(
         &mut control.0,
-        StreamHeader::ControlRequest {
-          name: None,
-          token,
-          org,
-          app,
-        },
+        StreamHeader::ControlRequest { token, org, app },
       )
       .await?;
 
@@ -401,7 +396,6 @@ impl Resource for TunnelStreamResource {
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 enum StreamHeader {
   ControlRequest {
-    name: Option<String>,
     token: String,
     org: String,
     app: String,
